@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò Chơi Tương Tác: Ôn Tập Giữa HK1 - KHTN 9</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #e8f5e9;
+            --secondary-color: #f57c00;
+            --error-color: #d32f2f;
+            --success-color: #2e7d32;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 15px; }
+        .container { background-color: var(--card-bg); width: 100%; max-width: 850px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); padding: 25px; position: relative; }
+        header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--primary-light); padding-bottom: 15px; }
+        h1 { color: var(--primary-color); font-size: 1.4rem; margin-bottom: 6px; }
+        .sub-title { font-size: 0.95rem; color: #666; }
+        
+        #start-screen { text-align: center; padding: 20px 0; }
+        .input-group { margin: 20px 0; }
+        label { display: block; font-size: 1.1rem; margin-bottom: 10px; font-weight: 600; }
+        input[type="text"] { width: 100%; max-width: 400px; padding: 12px; font-size: 1.05rem; border: 2px solid #ccc; border-radius: 8px; outline: none; text-align: center; }
+        input[type="text"]:focus { border-color: var(--primary-color); }
+        
+        .btn { background-color: var(--primary-color); color: white; border: none; padding: 12px 24px; font-size: 1rem; font-weight: bold; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 10px; }
+        .btn:hover { background-color: #1b5e20; }
+        .btn-secondary { background-color: #78909c; }
+        .btn-secondary:hover { background-color: #455a64; }
+
+        .progress-container { width: 100%; background-color: #e0e0e0; border-radius: 10px; height: 10px; margin-bottom: 20px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.3s ease; }
+
+        #quiz-screen { display: none; }
+        .question-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .level-badge { background-color: var(--primary-light); color: var(--primary-color); padding: 4px 12px; border-radius: 15px; font-size: 0.85rem; font-weight: bold; }
+        .question-number { font-size: 1rem; font-weight: bold; color: var(--secondary-color); }
+        .question-text { font-size: 1.15rem; font-weight: 600; line-height: 1.5; margin-bottom: 20px; }
+        
+        .options-list { list-style: none; }
+        .option-item { background-color: #f8f9fa; border: 2px solid #e9ecef; border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; }
+        .option-item:hover { border-color: var(--primary-color); background-color: var(--primary-light); }
+        .option-item.selected { border-color: var(--primary-color); background-color: var(--primary-light); font-weight: bold; }
+        .option-item input[type="radio"] { margin-right: 12px; transform: scale(1.2); accent-color: var(--primary-color); }
+
+        /* Style dạng Đúng/Sai */
+        .tf-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .tf-table th, .tf-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .tf-table th { background-color: var(--primary-light); color: var(--primary-color); }
+        .tf-table td.center { text-align: center; width: 70px; }
+
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+        
+        #result-screen { display: none; }
+        .score-box { text-align: center; background-color: var(--primary-light); padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .final-score { font-size: 2.2rem; font-weight: bold; color: var(--secondary-color); margin: 8px 0; }
+        
+        .review-item { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; background-color: #fff; }
+        .review-item.correct { border-left: 6px solid var(--success-color); }
+        .review-item.incorrect { border-left: 6px solid var(--error-color); }
+        .explanation { margin-top: 8px; background-color: #f1f3f4; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #444; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .question-text { font-size: 1rem; }
+            .btn { width: 48%; padding: 10px 5px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>TRÒ CHƠI KHOA HỌC TỰ NHIÊN 9</h1>
+        <div class="sub-title">Thử Thách Ôn Tập Giữa Học Kỳ I</div>
+    </header>
+
+    <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="start-screen">
+        <div class="input-group">
+            <label for="student-name">Họ và tên học sinh:</label>
+            <input type="text" id="student-name" placeholder="Nhập họ và tên..." autocomplete="off">
+        </div>
+        <button class="btn" onclick="startQuiz()">Bắt Đầu Bứt Phá</button>
+    </div>
+
+    <div id="quiz-screen">
+        <div class="question-meta">
+            <span class="question-number" id="q-number">Câu 1/15</span>
+            <span class="level-badge" id="q-level">Ôn Tập</span>
+        </div>
+        <div class="question-text" id="q-text">Nội dung câu hỏi</div>
+        
+        <div id="interactive-area"></div>
+
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" id="btn-prev" onclick="prevQuestion()" disabled>Câu trước</button>
+            <button class="btn" id="btn-next" onclick="nextQuestion()">Câu tiếp</button>
+            <button class="btn" id="btn-submit" onclick="submitQuiz()" style="display: none; background-color: var(--secondary-color);">Nộp Bài</button>
+        </div>
+    </div>
+
+    <div id="result-screen">
+        <div class="score-box">
+            <h2>KẾT QUẢ BÀI LÀM</h2>
+            <p style="margin-top: 5px;">Học sinh: <strong id="result-name" style="color: var(--primary-color);"></strong></p>
+            <div class="final-score" id="result-score">0 / 15 Điểm</div>
+            <p id="result-feedback"></p>
+        </div>
+
+        <h3 style="margin-bottom: 15px; color: var(--primary-color);">ĐÁP ÁN VÀ GIẢI THÍCH CHI TIẾT:</h3>
+        <div id="review-container"></div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="btn" onclick="restartQuiz()">Làm Lại Bài</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        {
+            type: "single",
+            level: "Phương Pháp NCKH",
+            question: "Thứ tự sắp xếp chuẩn cấu trúc bài báo cáo kết quả nghiên cứu một vấn đề khoa học gồm những phần nào?",
+            options: [
+                "Tiêu đề → Giới thiệu → Tóm tắt → Phương pháp → Kết quả → Thảo luận → Kết luận → Tài liệu tham khảo",
+                "Tiêu đề → Tóm tắt → Giới thiệu → Phương pháp → Kết quả → Thảo luận → Kết luận → Tài liệu tham khảo",
+                "Tiêu đề → Tóm tắt → Phương pháp → Kết quả → Giới thiệu → Thảo luận → Kết luận → Tài liệu tham khảo",
+                "Giới thiệu → Tiêu đề → Tóm tắt → Phương pháp → Kết quả → Thảo luận → Kết luận → Tài liệu tham khảo"
+            ],
+            correct: 1,
+            explanation: "Cấu trúc chuẩn của bài báo cáo khoa học gồm 8 phần: Tiêu đề, Tóm tắt, Giới thiệu, Phương pháp, Kết quả, Thảo luận, Kết luận, Tài liệu tham khảo."
+        },
+        {
+            type: "single",
+            level: "Di Truyền - Biến Dị",
+            question: "Hiện tượng con sinh ra mang các tính trạng KHÁC với bố mẹ, tổ tiên được gọi là gì?",
+            options: [
+                "Di truyền",
+                "Biến dị",
+                "Lai phân tích",
+                "Đồng tính"
+            ],
+            correct: 1,
+            explanation: "Biến dị là hiện tượng con sinh ra mang các tính trạng khác với bố mẹ, tổ tiên. (Di truyền là mang tính trạng giống bố mẹ)."
+        },
+        {
+            type: "single",
+            level: "Thí Nghiệm Mendel",
+            question: "Đâu KHÔNG phải là lý do Mendel chọn đậu Hà Lan làm đối tượng nghiên cứu di truyền?",
+            options: [
+                "Cây tự thụ phấn nghiêm ngặt, dễ tạo dòng thuần chủng",
+                "Có nhiều cặp tính trạng tương phản rõ rệt",
+                "Thời gian sinh trưởng kéo dài nhiều năm",
+                "Dễ thực hiện giao phấn nhân tạo và thu số lượng hạt lớn"
+            ],
+            correct: 2,
+            explanation: "Đậu Hà Lan có thời gian sinh trưởng NGẮN (không phải kéo dài nhiều năm), giúp Mendel rút ngắn thời gian nghiên cứu."
+        },
+        {
+            type: "single",
+            level: "Khái Niệm Di Truyền",
+            question: "Tổ hợp toàn bộ các tính trạng của cơ thể sinh vật, được hình thành do sự tương tác giữa kiểu gene và môi trường được gọi là gì?",
+            options: [
+                "Kiểu gene",
+                "Kiểu hình",
+                "Allele",
+                "Tính trạng lặn"
+            ],
+            correct: 1,
+            explanation: "Kiểu hình là tổ hợp toàn bộ các tính trạng của cơ thể, là kết quả của sự tương tác giữa kiểu gene và môi trường."
+        },
+        {
+            type: "tf",
+            level: "Khái Niệm Di Truyền",
+            question: "Xác định tính Đúng/Sai cho các định nghĩa về thuật ngữ di truyền:",
+            statements: [
+                "a) Tính trạng trội là tính trạng bị che khuất và chỉ biểu hiện ở cơ thể đồng hợp lặn (aa).",
+                "b) Dị hợp là cặp gene bao gồm hai allele khác nhau (ví dụ: Aa).",
+                "c) Allele là các trạng thái khác nhau của cùng một gene."
+            ],
+            correct: [false, true, true],
+            explanation: "a) Sai vì tính trạng bị che khuất là tính trạng LẶN, còn tính trạng TRỘI biểu hiện ngay ở cơ thể dị hợp (Aa)."
+        },
+        {
+            type: "single",
+            level: "Quy Luật Phân Li",
+            question: "Phát biểu nào sau đây thể hiện đúng nội dung Quy luật phân li của Mendel?",
+            options: [
+                "Mỗi tính trạng do một cặp nhân tố di truyền (cặp allele) quy định. Khi giảm phân hình thành giao tử, các allele trong cặp phân li đồng đều về các giao tử.",
+                "Các cặp nhân tố di truyền quy định các tính trạng khác nhau phân li độc lập với nhau.",
+                "Tính trạng lặn luôn hòa trộn với tính trạng trội ở đời con.",
+                "Tất cả các giao tử sinh ra đều chứa hai allele của cặp."
+            ],
+            correct: 0,
+            explanation: "Nội dung quy luật phân li: Mỗi tính trạng do 1 cặp allele quy định. Khi giảm phân, các allele phân li đồng đều về các giao tử nên mỗi giao tử chỉ chứa 1 allele."
+        },
+        {
+            type: "single",
+            level: "Lai Phân Tích",
+            question: "Khi thực hiện phép lai phân tích (lai cá thể mang tính trạng trội chưa biết kiểu gene với cá thể lặn), nếu kết quả thu được là PHÂN TÍNH (1 trội : 1 lặn) thì cá thể mang tính trạng trội có kiểu gene gì?",
+            options: [
+                "Đồng hợp trội (AA)",
+                "Dị hợp (Aa)",
+                "Đồng hợp lặn (aa)",
+                "Không xác định được"
+            ],
+            correct: 1,
+            explanation: "Nếu kết quả lai phân tích là phân tính thì cá thể mang tính trạng trội đem lai có kiểu gene dị hợp (Aa). Nếu đồng tính thì kiểu gene là đồng hợp trội (AA)."
+        },
+        {
+            type: "single",
+            level: "Cấu Trúc DNA",
+            question: "Các đơn phân nucleotide giữa hai mạch polynucleotide của phân tử DNA liên kết với nhau theo Nguyên tắc bổ sung (NTBS) như thế nào?",
+            options: [
+                "A liên kết với C bằng 2 liên kết hydrogen, G liên kết với T bằng 3 liên kết hydrogen",
+                "A liên kết với T bằng 3 liên kết hydrogen, G liên kết với C bằng 2 liên kết hydrogen",
+                "A liên kết với T bằng 2 liên kết hydrogen, G liên kết với C bằng 3 liên kết hydrogen",
+                "A liên kết với U bằng 2 liên kết hydrogen, G liên kết với C bằng 3 liên kết hydrogen"
+            ],
+            correct: 2,
+            explanation: "Trêm DNA: A liên kết với T bằng 2 liên kết hydrogen; G liên kết với C bằng 3 liên kết hydrogen."
+        },
+        {
+            type: "single",
+            level: "Bài Tập Bài DNA",
+            question: "Cho mạch gốc của một đoạn DNA có trình tự: 5'... A – T – T – A – C – T – G ...3'. Trình tự các nucleotide trên mạch bổ sung sẽ là gì?",
+            options: [
+                "3'... T – A – A – T – G – A – C ...5'",
+                "3'... U – A – A – U – G – A – C ...5'",
+                "3'... A – T – T – A – C – T – G ...5'",
+                "3'... C – G – G – C – T – G – A ...5'"
+            ],
+            correct: 0,
+            explanation: "Theo nguyên tắc bổ sung (A-T, T-A, C-G, G-C), mạch bổ sung tương ứng là: T – A – A – T – G – A – C."
+        },
+        {
+            type: "tf",
+            level: "Tính Đa Dạng DNA",
+            question: "Xét tính Đúng/Sai của các phát biểu về sự đa dạng và chức năng của DNA:",
+            statements: [
+                "a) Mặc dù chỉ có 4 loại nucleotide (A, T, G, C) nhưng DNA rất đa dạng và đặc trưng bởi số lượng, thành phần và trình tự sắp xếp các nucleotide.",
+                "b) Chức năng chính của DNA là trực tiếp vận chuyển axit amin đến ribosome để tổng hợp protein.",
+                "c) Phân tích DNA có thể ứng dụng trong xác định huyết thống, khoa học hình sự, y học và nghiên cứu tiến hóa."
+            ],
+            correct: [true, false, true],
+            explanation: "b) Sai vì chức năng của DNA là lưu giữ, bảo quản và truyền đạt thông tin di truyền (vận chuyển axit amin là chức năng của tRNA)."
+        },
+        {
+            type: "single",
+            level: "Cấu Trúc RNA",
+            question: "Đơn phân cấu tạo nên đại phân tử RNA gồm 4 loại nucleotide nào?",
+            options: [
+                "A, T, G, C",
+                "A, U, G, C",
+                "A, T, U, C",
+                "A, T, G, U"
+            ],
+            correct: 1,
+            explanation: "RNA gồm 4 loại đơn phân nucleotide là A, U, G, C (RNA chứa Uracil (U) thay vì Thymine (T) như trên DNA)."
+        },
+        {
+            type: "single",
+            level: "Các Loại RNA",
+            question: "Loại RNA nào có cấu trúc dạng mạch thẳng, đóng vai trò làm khuôn cho quá trình dịch mã (tổng hợp protein)?",
+            options: [
+                "tRNA (RNA vận chuyển)",
+                "rRNA (RNA ribosome)",
+                "mRNA (RNA thông tin)",
+                "DNA"
+            ],
+            correct: 2,
+            explanation: "mRNA (RNA thông tin) có cấu trúc mạch thẳng, làm khuôn cho quá trình dịch mã."
+        },
+        {
+            type: "tf",
+            level: "Chức Năng RNA",
+            question: "Đánh giá tính Đúng/Sai về cấu trúc và chức năng của các loại RNA:",
+            statements: [
+                "a) tRNA có cấu trúc xoắn cuộn thành các thùy (lá chẽ ba), mang bộ ba đối mã (anticodon) và làm nhiệm vụ vận chuyển axit amin.",
+                "b) rRNA kết hợp với protein để tạo nên ribosome - nơi tổng hợp protein.",
+                "c) Tất cả các loại RNA đều gồm hai chuỗi polynucleotide xoắn kép giống như DNA."
+            ],
+            correct: [true, true, false],
+            explanation: "c) Sai vì RNA chỉ gồm một chuỗi polynucleotide (chuỗi đơn)."
+        },
+        {
+            type: "single",
+            level: "Quy Luật Di Truyền",
+            question: "Trong thí nghiệm lai hai tính trạng của Mendel (Ptc: Hạt vàng, trơn x Hạt xanh, nhăn), tỉ lệ kiểu hình thu được ở F2 theo quy luật phân li độc lập là bao nhiêu?",
+            options: [
+                "3 hạt vàng, trơn : 1 hạt xanh, nhăn",
+                "9 hạt vàng, trơn : 3 hạt vàng, nhăn : 3 hạt xanh, trơn : 1 hạt xanh, nhăn",
+                "1 hạt vàng, trơn : 1 hạt vàng, nhăn : 1 hạt xanh, trơn : 1 hạt xanh, nhăn",
+                "100% hạt vàng, trơn"
+            ],
+            correct: 1,
+            explanation: "Phép lai 2 tính trạng của Mendel ở F2 phân tính theo tỉ lệ xấp xỉ 9 : 3 : 3 : 1."
+        },
+        {
+            type: "single",
+            level: "Bài Tập Di Truyền",
+            question: "Ở cà chua, gene A quy định quả đỏ trội hoàn toàn so với a quy định quả vàng. Cho cây quả đỏ dị hợp (Aa) tự thụ phấn thu được F1. Tỉ lệ kiểu gene thu được ở F1 là gì?",
+            options: [
+                "100% Aa",
+                "3 đỏ : 1 vàng",
+                "1 AA : 2 Aa : 1 aa",
+                "1 AA : 1 aa"
+            ],
+            correct: 2,
+            explanation: "Phép lai Aa x Aa cho tỉ lệ kiểu gene đời con là 1 AA : 2 Aa : 1 aa (tỉ lệ kiểu hình là 3 đỏ : 1 vàng)."
+        }
+    ];
+
+    let currentQuestion = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+    let studentName = "";
+
+    function startQuiz() {
+        const name = document.getElementById('student-name').value.trim();
+        if (!name) { alert("Vui lòng nhập họ và tên của em!"); return; }
+        studentName = name;
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        document.getElementById('progress-container').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentQuestion];
+        document.getElementById('q-number').innerText = `Câu ${currentQuestion + 1}/${quizData.length}`;
+        document.getElementById('q-level').innerText = q.level;
+        document.getElementById('q-text').innerText = q.question;
+
+        document.getElementById('progress-bar').style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+
+        const area = document.getElementById('interactive-area');
+        area.innerHTML = '';
+
+        if (q.type === 'single') {
+            const ul = document.createElement('ul');
+            ul.className = 'options-list';
+            q.options.forEach((opt, idx) => {
+                const li = document.createElement('li');
+                li.className = `option-item ${userAnswers[currentQuestion] === idx ? 'selected' : ''}`;
+                li.onclick = () => { userAnswers[currentQuestion] = idx; loadQuestion(); };
+                li.innerHTML = `<input type="radio" ${userAnswers[currentQuestion] === idx ? 'checked' : ''}> ${opt}`;
+                ul.appendChild(li);
+            });
+            area.appendChild(ul);
+        } else if (q.type === 'tf') {
+            if (!userAnswers[currentQuestion]) userAnswers[currentQuestion] = new Array(q.statements.length).fill(null);
+            const table = document.createElement('table');
+            table.className = 'tf-table';
+            table.innerHTML = `<tr><th>Mệnh đề</th><th class="center">Đúng</th><th class="center">Sai</th></tr>`;
+            q.statements.forEach((stmt, idx) => {
+                const tr = document.createElement('tr');
+                const val = userAnswers[currentQuestion][idx];
+                tr.innerHTML = `
+                    <td>${stmt}</td>
+                    <td class="center"><input type="radio" name="tf-${idx}" ${val === true ? 'checked' : ''} onclick="setTF(${idx}, true)"></td>
+                    <td class="center"><input type="radio" name="tf-${idx}" ${val === false ? 'checked' : ''} onclick="setTF(${idx}, false)"></td>
+                `;
+                table.appendChild(tr);
+            });
+            area.appendChild(table);
+        }
+
+        document.getElementById('btn-prev').disabled = currentQuestion === 0;
+        if (currentQuestion === quizData.length - 1) {
+            document.getElementById('btn-next').style.display = 'none';
+            document.getElementById('btn-submit').style.display = 'inline-block';
+        } else {
+            document.getElementById('btn-next').style.display = 'inline-block';
+            document.getElementById('btn-submit').style.display = 'none';
+        }
+    }
+
+    function setTF(idx, val) { userAnswers[currentQuestion][idx] = val; }
+    function nextQuestion() { if (currentQuestion < quizData.length - 1) { currentQuestion++; loadQuestion(); } }
+    function prevQuestion() { if (currentQuestion > 0) { currentQuestion--; loadQuestion(); } }
+
+    function submitQuiz() {
+        let score = 0;
+        quizData.forEach((q, idx) => {
+            const ans = userAnswers[idx];
+            if (q.type === 'single' && ans === q.correct) score++;
+            else if (q.type === 'tf' && Array.isArray(ans) && ans.every((v, i) => v === q.correct[i])) score++;
+        });
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('progress-container').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+
+        document.getElementById('result-name').innerText = studentName;
+        document.getElementById('result-score').innerText = `${score} / 15 Điểm`;
+
+        const feedback = document.getElementById('result-feedback');
+        if (score === 15) {
+            feedback.innerText = "Xuất sắc! Em đã nắm vững 100% nội dung đề cương ôn tập KHTN 9!";
+            feedback.style.color = "var(--success-color)";
+        } else if (score >= 10) {
+            feedback.innerText = "Kết quả rất tốt! Hãy xem kĩ phần giải thích các câu sai để chuẩn bị tốt nhất cho kì thi nhé!";
+            feedback.style.color = "var(--primary-color)";
+        } else {
+            feedback.innerText = "Em nên ôn kĩ lại đề cương và làm lại bài thử thách này để ghi nhớ kiến thức tốt hơn!";
+            feedback.style.color = "var(--error-color)";
+        }
+
+        const reviewContainer = document.getElementById('review-container');
+        reviewContainer.innerHTML = '';
+        quizData.forEach((q, idx) => {
+            const item = document.createElement('div');
+            item.className = 'review-item';
+            item.innerHTML = `<strong>Câu ${idx + 1}: ${q.question}</strong><div class="explanation"><strong>Lời giải / Giải thích:</strong> ${q.explanation}</div>`;
+            reviewContainer.appendChild(item);
+        });
+    }
+
+    function restartQuiz() {
+        currentQuestion = 0;
+        userAnswers = new Array(quizData.length).fill(null);
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('start-screen').style.display = 'block';
+    }
+</script>
+</body>
+</html>
